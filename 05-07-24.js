@@ -18,16 +18,20 @@ const  cors = require('cors');
 
   const app = express();
   const server = https.createServer(options, app);
-
+  const dbconnect = require('./db/db-connect');
   const wss = new WebSocket.Server({ server });
-
+  const User = require('./models/user');
   const clients = [];
+  const bcrypt = require('bcrypt');
+const e = require('express');
 
 //   // Serve your Unity WebGL client
 //   app.use(express.static('/home/ec2-user/2'));
 
 //---------------------------------------------------------------------------------AUTH CODE HERE-----------------
 
+//database connection\
+dbconnect();
 app.use(cors())
 
 
@@ -49,7 +53,7 @@ app.get('/', (req, res) => {
 
 
 
-app.post('/generateToken', function (req, res) {
+app.post('/generateToken', async function (req, res) {
 
 
 
@@ -58,13 +62,49 @@ app.post('/generateToken', function (req, res) {
 
     if (email != null) {
 
-        if (email == "Abhishekkange@gmail.com" && password == "Abhishek") {
-            const data = {
-                key: "ShahrukhKhan"
-            }
-            const token = jwt.sign(data, "shahrukhKhan");
-            res.send(token);
+        const registerdUser = await User.findOne({ email: email});
+
+
+        if(registerdUser != null) {
+            
+            
+            //now check the password
+            bcrypt.compare(password,registerdUser.password).then((result)=>{
+                
+                if(result==true)
+                    {
+                        
+                        const data = {
+                                    key: "ShahrukhKhan"
+                                }
+                                const token = jwt.sign(data, "shahrukhKhan");
+                                res.send(token);
+
+                    }
+                else{
+
+                    res.send("InvalidCredentials");
+                }    
+
+
+
+            })
+
+
+
+
         }
+        else{
+
+            res.send("InvalidToken");
+
+        }
+
+
+        // if (email == "Abhishekkange@gmail.com" && password == "Abhishek") {
+        //  
+        // }
+
 
 
 
